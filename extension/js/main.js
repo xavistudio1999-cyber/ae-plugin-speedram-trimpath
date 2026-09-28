@@ -3,6 +3,7 @@
   var keyBindings = {};
   var lastActionTime = 0;
   var debounceTime = 300; // ms
+  var stateCheckInterval = null;
 
   // Initialize CEP interface
   try {
@@ -37,12 +38,14 @@
       } else {
         setStatus('✓ ' + (actionName || 'Action') + ' completed successfully');
       }
+      // Update button states after action
+      updateButtonStateFromAE();
     });
   }
 
   function activateButton(button) {
     // Remove active state from all buttons
-    var allButtons = document.querySelectorAll('button');
+    var allButtons = document.querySelectorAll('button[data-action]');
     for (var i = 0; i < allButtons.length; i++) {
       allButtons[i].classList.remove('active');
     }
@@ -54,6 +57,33 @@
         button.classList.remove('active');
       }, 300);
     }
+  }
+
+  function updateButtonStateFromAE() {
+    if (!csInterface) return;
+
+    csInterface.evalScript('getSelectionState()', function (result) {
+      try {
+        var state = JSON.parse(result || '{}');
+        var buttons = document.querySelectorAll('[data-action]');
+        
+        for (var i = 0; i < buttons.length; i++) {
+          var btn = buttons[i];
+          var action = btn.getAttribute('data-action');
+          
+          if (state[action]) {
+            btn.classList.add('has-key');
+          } else {
+            btn.classList.remove('has-key');
+          }
+        }
+        
+        setStatus('✓ Button states updated - ' + Object.keys(state).filter(function(k) { return state[k]; }).length + ' actions available');
+      } catch (e) {
+        console.log('State parse error:', e);
+        setStatus('Ready');
+      }
+    });
   }
 
   function bindButtons() {
@@ -124,10 +154,24 @@
     });
   }
 
+  function startStateMonitoring() {
+    // Check state immediately
+    updateButtonStateFromAE();
+    
+    // Check state every 1 second to detect layer changes
+    if (stateCheckInterval) clearInterval(stateCheckInterval);
+    stateCheckInterval = setInterval(function () {
+      if (csInterface) {
+        updateButtonStateFromAE();
+      }
+    }, 1000);
+  }
+
   function init() {
     bindButtons();
     setupKeyboardShortcuts();
-    setStatus('MotionFlow ready - Press S, T, F, K, or A');
+    startStateMonitoring();
+    setStatus('MotionFlow initializing - Press S, T, F, K, or A');
   }
 
   // Initialize when DOM is ready
@@ -136,4 +180,9 @@
   } else {
     init();
   }
+
+  // Cleanup on unload
+  window.addEventListener('unload', function () {
+    if (stateCheckInterval) clearInterval(stateCheckInterval);
+  });
 })();
