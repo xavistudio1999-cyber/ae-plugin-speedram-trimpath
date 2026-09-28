@@ -5,13 +5,13 @@
   </ExtensionList>
   <ExecutionEnvironment>
     <HostList>
-      <Host Name="AEFT" Version="[18.0,99.9]" />
+      <Host Name="AEFT" Version="[21.0,99.9]" />
     </HostList>
     <LocaleList>
       <Locale Code="All" />
     </LocaleList>
     <RequiredRuntimeList>
-      <RequiredRuntime Name="CSXS" Version="11.0" />
+      <RequiredRuntime Name="CSXS" Version="7.0" />
     </RequiredRuntimeList>
   </ExecutionEnvironment>
   <DispatchInfoList>
@@ -19,9 +19,6 @@
       <DispatchInfo>
         <Resources>
           <MainPath>./extension/index.html</MainPath>
-          <CEFCommandLine>
-            <Parameter>--enable-nodejs</Parameter>
-          </CEFCommandLine>
         </Resources>
         <Lifecycle>
           <AutoVisible>true</AutoVisible>
