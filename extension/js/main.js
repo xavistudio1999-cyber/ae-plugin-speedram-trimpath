@@ -1,56 +1,139 @@
 (function () {
+  var csInterface = null;
+  var keyBindings = {};
+  var lastActionTime = 0;
+  var debounceTime = 300; // ms
+
+  // Initialize CEP interface
+  try {
+    if (window.__adobe_cep__) {
+      csInterface = new CSInterface();
+    }
+  } catch (e) {
+    console.log('CEP not available');
+  }
+
   function setStatus(text) {
     var el = document.getElementById('status');
     if (el) el.textContent = text;
   }
 
-  function callAE(command) {
-    var script = 'var result = ' + command + '; result;';
+  function callAE(command, actionName) {
+    var now = Date.now();
+    if (now - lastActionTime < debounceTime) {
+      setStatus('Please wait before executing another action...');
+      return;
+    }
+    lastActionTime = now;
 
-    if (window.__adobe_cep__) {
-      var cs = new CSInterface();
-      cs.evalScript(script, function (result) {
-        if (result && result !== 'undefined') {
-          setStatus(result);
-        } else {
-          setStatus('Action complete');
-        }
-      });
-    } else {
-      setStatus('Running outside CEP. Use the JSX script in After Effects.');
+    if (!csInterface) {
+      setStatus('CEP interface not available');
+      return;
+    }
+
+    csInterface.evalScript(command, function (result) {
+      if (result && result !== 'undefined' && result !== '') {
+        setStatus(result);
+      } else {
+        setStatus('✓ ' + (actionName || 'Action') + ' completed successfully');
+      }
+    });
+  }
+
+  function activateButton(button) {
+    // Remove active state from all buttons
+    var allButtons = document.querySelectorAll('button');
+    for (var i = 0; i < allButtons.length; i++) {
+      allButtons[i].classList.remove('active');
+    }
+    
+    // Add active state to clicked button
+    if (button) {
+      button.classList.add('active');
+      setTimeout(function () {
+        button.classList.remove('active');
+      }, 300);
     }
   }
 
   function bindButtons() {
     var buttons = document.querySelectorAll('[data-action]');
     for (var i = 0; i < buttons.length; i++) {
-      buttons[i].addEventListener('click', function () {
-        var action = this.getAttribute('data-action');
-        switch (action) {
-          case 'speedram':
-            callAE('applySpeedRamp()');
-            break;
-          case 'trimpath':
-            callAE('applyTrimPath()');
-            break;
-          case 'smoothflow':
-            callAE('smoothMotionFlow()');
-            break;
-          case 'strokefill':
-            callAE('applyStrokeAndFill()');
-            break;
-          case 'textanim':
-            callAE('animateTextLayer()');
-            break;
-          case 'clearconsole':
-            callAE('clearConsole()');
-            break;
-          default:
-            setStatus('Unknown action');
-        }
-      });
+      buttons[i].addEventListener('click', (function(btn) {
+        return function() {
+          executeAction(btn);
+        };
+      })(buttons[i]));
     }
   }
 
-  bindButtons();
+  function executeAction(button) {
+    var action = button.getAttribute('data-action');
+    activateButton(button);
+    
+    switch (action) {
+      case 'speedram':
+        callAE('applySpeedRamp()', 'SpeedRam');
+        break;
+      case 'trimpath':
+        callAE('applyTrimPath()', 'Trim Path');
+        break;
+      case 'smoothflow':
+        callAE('smoothMotionFlow()', 'Smooth Flow');
+        break;
+      case 'strokefill':
+        callAE('applyStrokeAndFill()', 'Stroke + Fill');
+        break;
+      case 'textanim':
+        callAE('animateTextLayer()', 'Text Animation');
+        break;
+      case 'clearconsole':
+        callAE('clearConsole()', 'Console');
+        break;
+      default:
+        setStatus('Unknown action: ' + action);
+    }
+  }
+
+  function setupKeyboardShortcuts() {
+    keyBindings = {
+      's': 'speedram',
+      't': 'trimpath',
+      'f': 'smoothflow',
+      'k': 'strokefill',
+      'a': 'textanim'
+    };
+
+    document.addEventListener('keydown', function (e) {
+      var key = e.key.toLowerCase();
+      
+      // Only trigger if not typing in an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      if (keyBindings[key]) {
+        e.preventDefault();
+        var action = keyBindings[key];
+        var button = document.querySelector('[data-action="' + action + '"]');
+        
+        if (button) {
+          executeAction(button);
+        }
+      }
+    });
+  }
+
+  function init() {
+    bindButtons();
+    setupKeyboardShortcuts();
+    setStatus('MotionFlow ready - Press S, T, F, K, or A');
+  }
+
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();

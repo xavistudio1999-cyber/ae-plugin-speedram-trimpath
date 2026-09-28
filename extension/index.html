@@ -10,22 +10,33 @@
   <div class="panel">
     <h1>MotionFlow</h1>
 
-    <div class="group">
-      <button data-action="speedram">SpeedRam</button>
-      <button data-action="trimpath">Trim Path</button>
+    <div class="shortcuts">
+      <p>Keyboard Shortcuts:</p>
+      <ul>
+        <li><kbd>S</kbd> - SpeedRam</li>
+        <li><kbd>T</kbd> - Trim Path</li>
+        <li><kbd>F</kbd> - Smooth Flow</li>
+        <li><kbd>K</kbd> - Stroke + Fill</li>
+        <li><kbd>A</kbd> - Text Animation</li>
+      </ul>
     </div>
 
     <div class="group">
-      <button data-action="smoothflow">Smooth Flow</button>
-      <button data-action="strokefill">Stroke + Fill</button>
+      <button data-action="speedram" data-key="s">SpeedRam (S)</button>
+      <button data-action="trimpath" data-key="t">Trim Path (T)</button>
     </div>
 
     <div class="group">
-      <button data-action="textanim">Text Animation</button>
+      <button data-action="smoothflow" data-key="f">Smooth Flow (F)</button>
+      <button data-action="strokefill" data-key="k">Stroke + Fill (K)</button>
+    </div>
+
+    <div class="group">
+      <button data-action="textanim" data-key="a">Text Animation (A)</button>
       <button data-action="clearconsole">Clear Console</button>
     </div>
 
-    <div class="status" id="status">Ready</div>
+    <div class="status" id="status">Ready - Press keyboard shortcuts or click buttons</div>
   </div>
 
   <script src="./js/main.js"></script>
